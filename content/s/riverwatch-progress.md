@@ -1,5 +1,5 @@
 ---
-title: "RiverWatch 개발 일지 — 2026-06-12"
+title: "RiverWatch 개발 일지 — 2026-06-18"
 tags:
   - riverwatch
   - 개발일지
@@ -17,49 +17,67 @@ tags:
 | 프로젝트 | 핵심 | 상태 |
 |---------|------|------|
 | 하천ON | 복합재난 경보·취약가구·AR 역사탐방 | 계획서 완료 |
-| RiverWatch | 생태건강도(EHI)·정책보고서·10개 하천 | **Phase 1 구현 완료** |
+| RiverWatch | 생태건강도(EHI)·정책보고서·10개 하천 | **Phase 2 확장 완료** |
 | 거시기(Geosigi) | 외국인 유학생 정착·시민과학 연결 앱 | 계획서·명세서 완료 |
 
 ---
 
-## 오늘 구현한 것 (2026-06-12)
+## Phase 1 구현 (2026-06-12)
 
-### 1. 데이터 파이프라인
+### 데이터 파이프라인
+- `river_monitor.py` — 서울시 열린데이터 API → Supabase 자동 저장 (21개 관측소)
+- `collectors/species.py` — iNaturalist API → 도림천 생물 관찰 수집 (14건)
+- `collectors/ehi.py` — EHI 생태건강지수 A~E 산출
+- `collectors/invasive_alert.py` — 15종 생태교란종 경보
 
-- `river_monitor.py` — 서울시 열린데이터 API → Supabase 자동 저장
-  - 21개 관측소 실시간 수위 수집
-  - 위험(80%+) / 주의(50%+) / 안전 3단계 판정
-  - 오늘 결과: **4곳 위험** (양산교 88.8%, 계성교 87.3% 등)
+### 웹 대시보드
+- `dashboard.html` — Leaflet 다크 지도 + 수위 테이블 + 생물 갤러리
 
-- `collectors/species.py` — iNaturalist API → 도림천 생물 관찰 수집
-  - 도림천 반경 2km, 최근 30일 관찰 데이터
-  - 오늘 결과: **14건** (왕오색나비, 왜가리 등)
-  - 15종 생태교란종 자동 판별
+---
 
-### 2. AI Agent 3개 동작
+## Phase 2 확장 (2026-06-18)
 
-| Agent | 파일 | 기능 |
-|-------|------|------|
-| Agent 1: 종 식별 | `collectors/species.py` | iNaturalist CV API 연동 |
-| Agent 2: EHI 산출 | `collectors/ehi.py` | 생물다양성+수위안정+외래종+관찰빈도 → A~E |
-| Agent 3: 외래종 경보 | `collectors/invasive_alert.py` | 15종 DB 매칭 + 3단계 경보 |
+### 10개 하천 Hub & Spoke 확장
+`species.py`를 도림천 전용에서 서울 10개 하천으로 확장:
 
-**EHI 산출 결과:**
-- 도림천: **B등급 (66.0점)** — 생물 데이터 있어 가장 높음
-- 나머지 하천: D~E등급 (생물 데이터 축적 필요)
+| 하천 | 위도 | 경도 | 관찰 건수 |
+|------|------|------|----------|
+| 도림천 | 37.4838 | 126.9295 | 14건 |
+| 안양천 | 37.4750 | 126.8870 | 1건 |
+| 중랑천 | 37.5950 | 127.0500 | 14건 |
+| 탄천 | 37.5050 | 127.0780 | 50건 |
+| 불광천 | 37.5900 | 126.9200 | 13건 |
+| 홍제천 | 37.5750 | 126.9450 | 18건 |
+| 방학천 | 37.6550 | 127.0280 | 2건 |
+| 우이천 | 37.6500 | 127.0130 | 11건 |
+| 정릉천 | 37.6050 | 127.0050 | 6건 |
+| 청계천 | 37.5700 | 127.0100 | 50건 |
 
-### 3. 웹 대시보드
+**총 179건 관찰, 119종 확인, 외래종 0건**
 
-`dashboard.html` — Supabase 실시간 연동 대시보드
-- Leaflet 다크 지도 + 관측소 마커 (빨강/주황/초록)
-- 수위 현황 테이블 (위험도순 정렬)
-- 도림천 수위 추이 차트
-- 생물 관찰 사진 갤러리 (iNaturalist 실제 사진)
+### EHI 생태건강도 결과
 
-### 4. 자동화
+| 등급 | 하천 | 점수 |
+|------|------|------|
+| 🟢 A | 청계천, 탄천 | 85.0 |
+| 🟢 B | 홍제천(74.5), 도림천(70.0), 불광천(66.0), 중랑천(66.0), 우이천(60.0), 정릉천(60.0) | |
+| 🟡 C | 방학천(49.0), 안양천(44.5) | |
 
-- Windows 작업 스케줄러 `RiverWatch_Collector` — 매시간 4개 수집기 자동 실행
-- `run_collectors.bat` — 수위 + 생물 + EHI + 외래종 순차 실행
+EHI = 생물다양성 30% + 수위안정성 30% + 외래종부재 20% + 관찰빈도 20%
+
+### Agent 4: 정책보고서 자동 생성
+- `collectors/policy_report.py` — 데이터 집계 → 마크다운 보고서
+- `reports/report_2026-06.md` 첫 보고서 생성
+- 내용: 요약 + 하천별 EHI + 수위 위험 + 외래종 + 생물다양성 + 정책 제언
+
+### 대시보드 EHI 패널
+- `dashboard.html`에 EHI 생태건강도 카드 추가
+- 하천별 등급(A~E) + 점수 바 시각화
+- Beta 시범운영 배지 추가
+
+### 산출물
+- **QR코드**: `qr-dashboard.png` — 대시보드 접속용
+- **발표자료**: `RiverWatch_Beta_발표자료.pptx` (8슬라이드, 다크테마)
 
 ---
 
@@ -78,22 +96,28 @@ Supabase:   https://gypkipqlkaeocrvzueek.supabase.co
 | 테이블 | 상태 | 데이터 |
 |--------|------|--------|
 | `river_readings` | ✅ | 21건/회 |
-| `species_observations` | ✅ | 14건 |
+| `species_observations` | ✅ | 179건+ (10개 하천) |
 | `invasive_alerts` | ✅ | 0건 (외래종 미감지) |
-| `ehi_scores` | ⏳ SQL 실행 필요 | - |
+| `ehi_scores` | ✅ | 21건 (10개 하천) |
+| `collector_health` | ⏳ SQL 준비됨 | - |
 
 ### 프로젝트 구조
 
 ```
 sakyowon-ai/
 ├── index.html              ← 메인 사이트
-├── dashboard.html          ← RiverWatch 대시보드
+├── dashboard.html          ← RiverWatch 대시보드 (Beta)
 ├── river_monitor.py        ← 수위 수집 + Supabase
 ├── collectors/
-│   ├── species.py          ← Agent 1: 종 식별
+│   ├── species.py          ← Agent 1: 종 식별 (10개 하천)
 │   ├── ehi.py              ← Agent 2: EHI 산출
-│   └── invasive_alert.py   ← Agent 3: 외래종 경보
-├── run_collectors.bat      ← 자동 실행 배치
+│   ├── invasive_alert.py   ← Agent 3: 외래종 경보
+│   └── policy_report.py    ← Agent 4: 정책보고서
+├── reports/
+│   └── report_2026-06.md   ← 첫 월간 보고서
+├── run_collectors.bat      ← Agent 1~4 자동 실행
+├── qr-dashboard.png        ← QR코드
+├── RiverWatch_Beta_발표자료.pptx ← 발표 자료
 ├── supabase_setup.sql      ← DB 스키마
 ├── .env                    ← API 키 (git 제외)
 └── .gitignore
@@ -104,15 +128,15 @@ sakyowon-ai/
 ## 다음 세션 TODO
 
 ### 즉시 할 일
-- [ ] Supabase에서 `ehi_scores` 테이블 SQL 실행
+- [ ] Supabase `collector_health` 테이블 SQL 실행
 - [ ] 환경부 TMS API 키 신청 (water.nier.go.kr)
-- [ ] 대시보드에 EHI 패널 추가
+- [ ] Supabase service_role key 발급 → .env 추가 → INSERT 정책 전환
 
-### Phase 2 구현 목표
-- [ ] Agent 4: 정책보고서 — Claude API로 월간 생태 리포트 자동 생성
+### Phase 3 구현 목표
 - [ ] TMS 수질 데이터 연동 (BOD, COD, DO, 총인, 총질소)
-- [ ] 10개 하천 Hub & Spoke 확장 (species.py에 좌표 추가)
+- [ ] Agent 4 → LLM (Claude API) 분석 보고서로 업그레이드
 - [ ] 문화재 방재 Agent 5 — 국가유산청 DB + LSTM 침수예측
+- [ ] 방호가이드 AI Agent 6
 
 ### 거시기(Geosigi) 시작 조건
 - [ ] 개인정보보호위원회 사전 자문 신청
@@ -128,7 +152,7 @@ sakyowon-ai/
 | 1 | 종 식별 (iNaturalist CV) | RiverWatch | ✅ 동작 |
 | 2 | EHI 생태건강지수 | RiverWatch | ✅ 동작 |
 | 3 | 외래종 경보 | RiverWatch | ✅ 동작 |
-| 4 | 정책보고서 (LLM) | RiverWatch | ⏳ 다음 |
+| 4 | 정책보고서 (템플릿) | RiverWatch | ✅ 동작 |
 | 5 | 문화재 침수 선제경보 | 하천ON | ⏳ 계획 |
 | 6 | 방호가이드 AI | 하천ON | ⏳ 계획 |
 | 7 | 정착안내 챗봇 | 거시기 | ⏳ 계획 |
