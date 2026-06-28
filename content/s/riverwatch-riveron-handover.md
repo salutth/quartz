@@ -1,18 +1,31 @@
 ---
-title: "RiverWatch + 하천ON 핸드오버 (2026-06-28 세션2)"
-date: 2026-06-28
-tags: [riverwatch, 하천ON, handover, supabase, telegram]
+title: "RiverWatch + 하천ON 핸드오버 (2026-06-29 세션3)"
+date: 2026-06-29
+tags: [riverwatch, 하천ON, handover, github-actions, cloud]
 ---
 
 ## 이번 세션 완료 작업
 
-### 1. Supabase 3차 프로젝트 생성 + 전체 마이그레이션
-- 이전 프로젝트 접근 불가 문제 → 새 프로젝트 생성 (서울 리전)
-- 프로젝트 ID: `nsuefjoovtbxlohwnigq`
-- 8개 테이블 한번에 생성 (RLS + 공개 정책 포함)
-- .env + 7개 HTML 파일 자격증명 업데이트 → Cloudflare 배포
+### 1. GitHub Actions 클라우드 데이터 수집 설정
+- GitHub Secrets 5개 등록 (SEOUL_API_KEY, SUPABASE_URL, SUPABASE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
+- `.github/workflows/collect.yml` 생성 (GitHub 웹에서 직접 생성)
+- 매시간 자동 실행 (cron: `0 * * * *` UTC)
+- 수동 테스트 성공 (1분 23초 소요, 전 수집기 정상)
+- **노트북 꺼져도 클라우드에서 자동 수집 가능**
 
-### 2. 전체 데이터 수집 완료
+### 2. RLS 보안 정책 강화
+- 8개 테이블 UPDATE/DELETE 차단 정책 적용
+- SELECT 공개, INSERT 허용 유지
+
+### 3. Beta 발표자료 PPTX 생성
+- `RiverWatch_Beta_발표자료.pptx` (8슬라이드, 다크 테마, 보라색 포인트)
+- 표지/문제인식/솔루션/성과/대시보드/가치/시범운영(QR)/로드맵
+
+### 4. 작업보고서 DOCX 생성
+- `RiverWatch_작업보고서_20260629.docx` (전체 작업 내역 문서화)
+
+## 이전 세션 누적 완료
+
 | 수집기 | 결과 |
 |--------|------|
 | 수위 (river_monitor.py) | 21건, 위험 4개 |
@@ -22,23 +35,13 @@ tags: [riverwatch, 하천ON, handover, supabase, telegram]
 | 기상 (weather.py) | 1,008건 |
 | 침수 경보 (flood_alert.py) | 11건 (긴급 2 + 위험 9) |
 
-### 3. 텔레그램 봇 연동 완료
-- 봇: @riverwatch_hacheon_bot
-- 토큰 + Chat ID → .env에 저장
-- 침수 경보 텔레그램 자동 전송 테스트 성공
-
-### 4. 버그 수정
-- EHI 대시보드: `calculated_at` → `created_at` 컬럼명 수정
-- 하천ON 지도: 기상 필터 쿼리 오류 수정
-- 플랫폼: RiverWatch 카드에 대시보드 링크 추가, 생물종 수 업데이트
-
-### 5. 단계별 구축 가이드 문서 작성
-- `/s/riverwatch-setup-guide` — Phase 1~7 전체 과정 + 트러블슈팅
-
 ## 배포 URL
 - 플랫폼: https://sakyowon-ai.pages.dev/platform
 - 대시보드: https://sakyowon-ai.pages.dev/dashboard
 - 하천ON: https://sakyowon-ai.pages.dev/river-on
+- 셋업 가이드: https://quartz-33c.pages.dev/s/riverwatch-setup-guide
 
 ## 미완료 — 다음 세션
-1. Phase 4: LSTM 침수 예측 AI (수위 데이터 3개월 축적 후)
+1. Phase 2: 수질 TMS 연동, LLM 보고서, 시민 미션
+2. Phase 3: LSTM 침수 예측 AI (수위 데이터 3개월 축적 후)
+3. Phase 3: 거시기 앱 (외국인 시민과학)
